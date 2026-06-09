@@ -1,0 +1,42 @@
+{
+  "+12h": {
+    "height_rmse_m": 80.81134584775558,
+    "height_full_rmse_m": 80.81134584775559,
+    "height_acc": 0.9734621867976258,
+    "height_full_acc": 0.9734621867976259,
+    "vorticity_rmse_s-1": 0.00010769733879176615,
+    "vorticity_acc": 0.331583060172489,
+    "height_bias_m": 60.293112995155035,
+    "verification_region": {
+      "lat_range": [
+        25.0,
+        55.0
+      ],
+      "lon_range": [
+        90.0,
+        145.0
+      ],
+      "n_points": 1650
+    }
+  },
+  "+24h": {
+    "height_rmse_m": 546.9999779607955,
+    "height_full_rmse_m": 546.9999779607955,
+    "height_acc": 0.5153295781787166,
+    "height_full_acc": 0.5153295781787168,
+    "vorticity_rmse_s-1": 0.00014165651458125148,
+    "vorticity_acc": 0.2253591013625242,
+    "height_bias_m": 497.51977265098134,
+    "verification_region": {
+      "lat_range": [
+        25.0,
+        55.0
+      ],
+      "lon_range": [
+        90.0,
+        145.0
+      ],
+      "n_points": 1650
+    }
+  }
+}
