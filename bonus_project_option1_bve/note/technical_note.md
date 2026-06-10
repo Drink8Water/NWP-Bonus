@@ -193,7 +193,7 @@ gridlines, contours, and filled contours are clipped to the curved boundary.
 analysis, and error maps. For visual consistency with the report footprint, the
 Lambert forecast field is interpolated to the original lat-lon display grid and
 smoothly tapered near the native model boundary. This display processing does
-not affect the quantitative scores in `scores_lambert.json`.
+not affect the quantitative scores reported in the experiment matrix.
 
 ---
 

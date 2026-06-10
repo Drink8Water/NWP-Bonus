@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate figures for the Lambert finite-area BVE experiments."""
+"""04 - Generate figures for the Lambert finite-area BVE experiments."""
 
 import csv
 import json
@@ -141,7 +141,7 @@ def make_ctrl_verification_figures(grid):
 
 
 def make_lambert_score_figure():
-    with open(os.path.join(OUT_DIR, 'scores_lambert.json')) as f:
+    with open(os.path.join(OUT_DIR, 'scores_experiment_matrix.json')) as f:
         scores = json.load(f)
 
     experiments = ['PERSIST_LCC', 'CTRL_LCC', 'DIFF_LCC', 'SPONGE_LCC', 'DIFF_SPONGE_LCC']

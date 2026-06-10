@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-08 — Run Lambert-grid BVE experiments and score their optimisation impact.
+03 — Run Lambert-grid BVE experiments and compute verification scores.
 """
 
 import os
@@ -74,7 +74,7 @@ def score_forecast(psi_fcst, zeta_fcst, z_anal, grid, mask):
 
 def main():
     print("=" * 72)
-    print("  Step 08: Lambert BVE Experiment Matrix")
+    print("  Step 03: Lambert BVE Experiment Matrix")
     print("=" * 72)
 
     os.makedirs(OUT_DIR, exist_ok=True)
@@ -130,7 +130,7 @@ def main():
             np.savez(os.path.join(OUT_DIR, f'{name}_forecast_{int(lead)}h.npz'),
                      psi=psi_fcst, zeta=zeta_fcst, time_hours=lead, experiment=name)
 
-    json_path = os.path.join(OUT_DIR, 'scores_lambert.json')
+    json_path = os.path.join(OUT_DIR, 'scores_experiment_matrix.json')
     with open(json_path, 'w') as f:
         json.dump(all_scores, f, indent=2)
     print(f"\nSaved: {json_path}")

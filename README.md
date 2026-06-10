@@ -95,7 +95,7 @@ python scripts/05_diagnostics.py
 | `data/processed_lambert/grid_info_lambert.npz` | Lambert 网格、`m(i,j)`、`f(i,j)` |
 | `outputs/*_LCC_forecast_*.npz` | Lambert 实验预报 `ψ, ζ` |
 | `outputs/*_LCC_verification_*.npz` | Lambert 实验验证数组 |
-| `outputs/scores_lambert.json` | Lambert 实验评分 |
+| `outputs/scores_experiment_matrix.json` | Lambert 实验评分 |
 | `outputs/diagnostics.json` | 数值诊断结果（Poisson 残差、能量、尺度分解、Δt 敏感性、Skill Score） |
 
 ### 图片

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-07 — Regrid processed ERA5 fields to a Lambert conformal model grid.
+02 — Regrid processed ERA5 fields to a Lambert conformal model grid.
 
 This uses the already processed lat-lon files from data/processed/ as source
 data, then writes data/processed_lambert/ for the finite-area Lambert BVE.
