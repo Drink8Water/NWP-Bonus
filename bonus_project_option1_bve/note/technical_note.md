@@ -133,9 +133,7 @@ analyses on the same grid over the inner verification domain
 | Metric                          | Formula |
 | ------------------------------- | ------- |
 | RMSE (height anomaly)           | √[mean ((Z′_fcst − Z′_anal)²)] |
-| RMSE (height full)              | √[mean ((Z_fcst − Z_anal)²)] |
 | Pattern correlation (anomaly)   | Anomaly correlation coefficient |
-| Pattern correlation (full)      | Full-field correlation coefficient |
 | Vorticity correlation           | Spatial correlation of relative vorticity |
 
 ### 4.2 Height Recovery
@@ -146,6 +144,11 @@ using the linear balance relation:
 $$
 Z'_{\text{fcst}} = \frac{f_0}{g} \psi_{\text{fcst}}.
 $$
+
+Because the FFT Poisson solver enforces a zero-mean streamfunction, the BVE
+forecast does not prognose the absolute domain-mean height.  Verification
+therefore focuses on height anomaly, bias, and debiased RMSE rather than a
+separate full-field RMSE.
 
 ---
 
@@ -160,9 +163,8 @@ Verification was performed against ERA5 analyses over the inner domain
 | Metric                          | +12 h    | +24 h    |
 | ------------------------------- | -------- | -------- |
 | Height anomaly RMSE (m)         | 80.8     | 547.0    |
-| Height full-field RMSE (m)      | 80.8     | 547.0    |
+| Height debiased RMSE (m)        | 53.8     | 227.3    |
 | Height anomaly correlation      | 0.973    | 0.515    |
-| Height full-field correlation   | 0.973    | 0.515    |
 | Vorticity correlation           | 0.332    | 0.225    |
 | Height bias (m)                 | +60.3    | +497.5   |
 
@@ -201,6 +203,36 @@ well over the first 12 hours, with forecast skill degrading by 24 hours as
 the lack of divergent and baroclinic processes becomes significant.
 Boundary contamination from the periodic Poisson solver is most visible
 near the northern and southern edges of the domain.
+
+### 5.3 Lambert Finite-Area Upgrade
+
+To test whether the large +24 h degradation is primarily a boundary-geometry
+problem, a Lambert conformal finite-area version was added. ERA5 fields are
+interpolated to a regular Lambert grid with spacing 150 km. The model uses
+spatially varying map factor $m(i,j)$ and Coriolis parameter $f(i,j)$:
+
+$$
+\frac{\partial \zeta}{\partial t}
+= -m^2 J(\psi,\zeta+f) + \nu m^2\nabla^2\zeta - \alpha(\zeta-\zeta_0),
+\qquad
+\zeta = m^2\nabla^2\psi.
+$$
+
+The Poisson inversion is solved with zero streamfunction on all boundaries,
+using a discrete sine-transform solver rather than a doubly periodic FFT.
+
+| Experiment       | +12 h RMSE | +24 h RMSE | +24 h ACC |
+| ---------------- | ---------- | ---------- | --------- |
+| PERSIST_LCC      | 42.9 m     | 70.3 m     | 0.953     |
+| CTRL_LCC         | 55.4 m     | 56.6 m     | 0.963     |
+| DIFF_LCC         | 55.9 m     | 57.9 m     | 0.960     |
+| SPONGE_LCC       | 50.8 m     | 69.0 m     | 0.960     |
+| DIFF_SPONGE_LCC  | 52.2 m     | 71.9 m     | 0.956     |
+
+The upgrade reduces CTRL +24 h RMSE from 547.0 m to 56.6 m and removes the
+large positive bias. In this new configuration, diffusion and sponge layers
+are no longer the dominant source of improvement; their role is limited to
+small-scale noise control and boundary relaxation.
 
 ---
 

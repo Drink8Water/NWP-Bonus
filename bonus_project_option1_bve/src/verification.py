@@ -205,11 +205,6 @@ def verify(psi_fcst, z_anal, grid, verification_mask=None):
     scores['height_debiased_rmse_m'] = debiased_rmse(zf_anom, za_anom, verification_mask)
     scores['height_acc'] = anomaly_correlation(zf_anom, za_anom, verification_mask)
 
-    # Full height metrics (not anomaly)
-    zf_full = forecast_height_anomaly(psi_fcst, grid) + np.mean(z_anal)
-    scores['height_full_rmse_m'] = rmse(zf_full, z_anal, verification_mask)
-    scores['height_full_acc'] = anomaly_correlation(zf_full, z_anal, verification_mask)
-
     # Vorticity metrics
     scores['vorticity_rmse'] = rmse(zeta_fcst, zeta_anal, verification_mask)
     scores['vorticity_acc'] = anomaly_correlation(zeta_fcst, zeta_anal, verification_mask)
@@ -218,7 +213,6 @@ def verify(psi_fcst, z_anal, grid, verification_mask=None):
         'scores': scores,
         'zf_anom': zf_anom,
         'za_anom': za_anom,
-        'zf_full': zf_full,
         'zeta_fcst': zeta_fcst,
         'zeta_anal': zeta_anal,
         'psi_anal': psi_anal,

@@ -20,8 +20,6 @@ from src.preprocess import (
     select_pressure_level, select_times, subset_region,
     coarsen_to_resolution, convert_geopotential, extract_field
 )
-from src.grid import BetaPlaneGrid
-
 # ── Configuration ──────────────────────────────────────────────────────────
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data', 'raw')
@@ -123,10 +121,17 @@ def main():
     print(f"  Actual resolution: dy={actual_dy_deg:.3f}°, dx={actual_dx_deg:.3f}°")
     print(f"  Data shape: {len(lat_1d)} x {len(lon_1d)}")
 
-    # Create model grid matching the actual data
-    grid = BetaPlaneGrid(lat0=LAT0, lon0=LON0,
-                          lat_range=actual_lat_range, lon_range=actual_lon_range,
-                          dx_deg=actual_dx_deg, dy_deg=actual_dy_deg)
+    # Compute grid parameters directly (no longer using beta-plane BetaPlaneGrid)
+    A = 6.371e6
+    OMEGA = 7.292e-5
+    G = 9.80665
+    lat0_rad = np.radians(LAT0)
+    f0 = 2.0 * OMEGA * np.sin(lat0_rad)
+    beta = 2.0 * OMEGA * np.cos(lat0_rad) / A
+    dx_m = A * np.cos(lat0_rad) * np.radians(actual_dx_deg)
+    dy_m = A * np.radians(actual_dy_deg)
+    ny = len(lat_1d)
+    nx = len(lon_1d)
 
     for idx, (ds_t, out_name) in enumerate(zip(ds_times, OUTPUT_NAMES)):
         # Extract 2-D fields (flip if data was N→S)
@@ -155,15 +160,15 @@ def main():
                  description=f"ERA5 500 hPa — {TIMES[idx]}")
         print(f"    Saved: {out_path}")
 
-    # Save grid info too
+    # Save grid info
     grid_path = os.path.join(OUTPUT_DIR, 'grid_info.npz')
     np.savez(grid_path,
              lat0=LAT0, lon0=LON0,
              lat_range=np.array(actual_lat_range), lon_range=np.array(actual_lon_range),
              dx_deg=actual_dx_deg, dy_deg=actual_dy_deg,
-             f0=grid.f0, beta=grid.beta,
-             dx_m=grid.dx, dy_m=grid.dy,
-             ny=grid.ny, nx=grid.nx)
+             f0=f0, beta=beta,
+             dx_m=dx_m, dy_m=dy_m,
+             ny=ny, nx=nx)
     print(f"\n  Saved grid info: {grid_path}")
 
     print("\n" + "=" * 60)

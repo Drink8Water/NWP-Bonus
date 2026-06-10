@@ -107,6 +107,15 @@ python scripts/05_run_sensitivity_experiments.py
 
 # 6. 灵敏度实验画图（可选）
 python scripts/06_sensitivity_figures.py
+
+# 7. 插值到 Lambert 模式网格
+python scripts/07_prepare_lambert_data.py
+
+# 8. 运行 Lambert / 固定边界实验矩阵
+python scripts/08_run_lambert_experiments.py
+
+# 9. 对比旧 beta-plane 与新 Lambert 结果
+python scripts/09_compare_lambert_impact.py
 ```
 
 ## 输出文件
@@ -124,6 +133,8 @@ python scripts/06_sensitivity_figures.py
 | `outputs/verification_+12h.npz`               | CTRL 验证场（+12 h）             |
 | `outputs/verification_+24h.npz`               | CTRL 验证场（+24 h）             |
 | `outputs/scores.json`                         | CTRL 的 RMSE、ACC、bias          |
+| `outputs/scores_lambert.json`                 | Lambert 实验矩阵评分             |
+| `outputs/lambert_impact_summary.csv`          | beta-plane vs Lambert 对比表      |
 
 ### 图片
 
@@ -142,8 +153,9 @@ python scripts/06_sensitivity_figures.py
 | `figures/fig11_diff_sponge_verification_24h.png`| DIFF_SPONGE +24 h 验证                |
 | `figures/fig12_diff_vorticity_24h.png`          | DIFF +24 h 涡度                       |
 
-所有地图都用 Lambert Conformal 投影（标准纬线 25°N/47°N，中心 105°E/35°N），
-填色区域是投影空间的规则矩形，不是经纬度矩形投影后的弯曲扇形。
+数值积分使用局地 beta 平面 Cartesian 网格；Lambert Conformal 投影只用于地图绘制
+（标准纬线 25°N/47°N，中心 105°E/35°N）。填色区域是投影空间的规则矩形，
+不是经纬度矩形投影后的弯曲扇形。
 
 ## CTRL 预报结果
 
@@ -208,13 +220,40 @@ python scripts/06_sensitivity_figures.py
 | `outputs/{EXP}_forecast_{LEAD}h.npz`        | 各实验的预报场            |
 | `outputs/{EXP}_verification_{LEAD}h.npz`    | 各实验的验证场            |
 
+## Lambert 有限区域动力核心
+
+新增 Lambert 版本使用投影平面规则网格、空间变化的 `m(i,j)` 与 `f(i,j)`，
+并把 Poisson 求解从双周期 FFT 改为固定边界 `ψ = 0` 的正弦变换解法。预报方程写成：
+
+$$
+\frac{\partial \zeta}{\partial t}
+= -m^2 J(\psi,\zeta+f) + \nu m^2\nabla^2\zeta - \alpha(\zeta-\zeta_0),
+\qquad
+\zeta = m^2\nabla^2\psi.
+$$
+
+Lambert 网格为 54 × 34，`d = 150 km`，覆盖约 56°E–174°E, 12°N–62°N。
+验证区仍为 25°N–55°N, 90°E–145°E。
+
+| 实验             | +12 h RMSE | +24 h RMSE | +24 h ACC | 说明 |
+| ---------------- | ---------- | ---------- | --------- | ---- |
+| PERSIST_LCC      | 42.9 m     | 70.3 m     | 0.953     | Lambert 网格上的持续性基准 |
+| CTRL_LCC         | 55.4 m     | 56.6 m     | 0.963     | Lambert + 固定边界主实验 |
+| DIFF_LCC         | 55.9 m     | 57.9 m     | 0.960     | 扩散在新核心中不再明显改善 RMSE |
+| SPONGE_LCC       | 50.8 m     | 69.0 m     | 0.960     | 降低 bias，但 +24 h RMSE 略差 |
+| DIFF_SPONGE_LCC  | 52.2 m     | 71.9 m     | 0.956     | 联合方案不优于 CTRL_LCC |
+
+最主要的改进来自边界和几何处理：旧 beta-plane 周期边界 CTRL 的 +24 h RMSE 为
+547.0 m，新 Lambert/固定边界 CTRL 降到 56.6 m，下降约 89.7%。这说明旧 CTRL 的
+大误差主要不是缺少 diffusion/sponge，而是周期边界和简化几何导致的系统性漂移。
+
 ## 已知局限
 
 1. **无辐散。** BVE 假设大气无辐散，槽前辐散和脊前辐合都不在方程里。
 2. **没有斜压过程。** 单层模型没法表示温度平流、垂直耦合和斜压不稳定。
-3. **周期性边界。** FFT Poisson 求解器强制双周期边界，对区域模式不现实。
+3. **旧 beta-plane 路径仍是周期性边界。** FFT Poisson 求解器强制双周期边界，对区域模式不现实。
    南北边界从 65°N"连"到 16°N，产生虚假梯度并向内传播。
-4. **β 平面近似。** 局地 Cartesian 坐标只在中纬度参考点附近有效，低纬和高纬误差会变大。
+4. **Lambert 高度恢复仍是诊断近似。** 当前用 $Z'=f\psi/g$ 恢复高度距平；更严格版本应解线性平衡方程。
 5. **粗分辨率。** ~1° 网格只能分辨天气尺度（>500 km），中尺度细节全丢了。
 6. **没有物理参数化。** 无摩擦、无地形、无非绝热加热——纯粹干动力学核心。
 7. **预报时效短。** 没有外强迫、边界误差累积，24–48 h 之后基本没法看。
