@@ -58,7 +58,7 @@ The Lambert grid is generated in `src/lambert_grid.py`.
 
 ERA5 fields are first processed on a regular latitude-longitude grid and then
 bilinearly interpolated to the Lambert model grid by
-`scripts/07_prepare_lambert_data.py`.
+`scripts/02_prepare_lambert_grid.py`.
 
 ### 2.3 Initial Condition
 
@@ -130,7 +130,7 @@ All scores are computed on the inner verification region
 
 ## 5. Experiments
 
-The Lambert experiment matrix is run by `scripts/08_run_lambert_experiments.py`.
+The Lambert experiment matrix is run by `scripts/03_run_experiments.py`.
 
 | Experiment | Description |
 | --- | --- |

@@ -1,79 +1,81 @@
-# Presentation Slides — BVE Forecast Experiment
+# Presentation Slides — Lambert-Grid BVE Forecast
 
 ---
 
-## Slide 1: Case, Data, Model, and Assumptions
+## Slide 1: Case, Model, and Workflow
 
-**Case: East Asian Winter Circulation**
+**Case: East Asian Winter Z500 Circulation**
 - Initial time: 2025-12-30 00 UTC
-- Forecast: +12 h (2025-12-30 12 UTC) and +24 h (2025-12-31 00 UTC)
+- +12 h / +24 h verification: 2025-12-30 12 UTC / 2025-12-31 00 UTC
 - Domain: 15°N–65°N, 60°E–170°E; verification: 25°N–55°N, 90°E–145°E
-- December 2025: well-organised mid-latitude wave train across Eurasia
 
-**Data**
-- ERA5 reanalysis at 500 hPa (0.25° native → coarsened to ~1°)
-- Variables: geopotential height Z, u, v
-- Processed entirely from local files — no internet required
+**Data & Workflow**
+```
+ERA5 Z500, u500, v500
+  → subset East Asia, coarsen to ~1°
+  → interpolate to Lambert conformal grid
+  → construct initial ζ and ψ (geostrophic, ψ=0 on boundaries)
+  → integrate finite-area BVE for 12–24 h (RK4, Δt=600 s)
+  → compare height anomalies with ERA5 verifying analysis
+```
 
-**Model: Barotropic Vorticity Equation on a Beta-Plane**
-$$
-\frac{\partial \zeta}{\partial t} + J(\psi, \zeta) + \beta \frac{\partial \psi}{\partial x} = 0,
-\quad \nabla^2 \psi = \zeta
-$$
-- β-plane centred at 40°N: f₀ = 2Ω sin 40°, β = 2Ω cos 40° / a
+**Model: Barotropic Vorticity Equation on a Lambert Conformal Grid**
 
-**Numerics**
+$$\frac{\partial\zeta}{\partial t} = -m^2 J(\psi,\zeta+f) + \nu m^2\nabla^2\zeta - \alpha(\zeta-\zeta_{\text{ref}})$$
+
+$$\zeta = m^2\nabla^2\psi$$
+
+- m: Lambert map factor; f: local Coriolis parameter
+- ψ = 0 on all boundaries (Dirichlet)
+- Poisson inversion via discrete sine transform (DST)
 - Arakawa Jacobian (energy + enstrophy conserving)
-- RK4 time integration, Δt = 600 s
-- FFT Poisson solver (doubly periodic)
-- Grid: regular Cartesian, ~1° spacing
 
 **Key Assumptions**
 - Non-divergent, barotropic flow
-- No diabatic heating or friction
-- Local beta-plane geometry
-- Geostrophic initial condition
+- Lambert conformal projection (angle-preserving, suitable for mid-latitudes)
+- Fixed lateral boundaries, no time-dependent forcing
+- No diabatic heating or friction (except explicit sensitivity terms)
 
 ---
 
-## Slide 2: Forecast Results, Verification, and Limitations
+## Slide 2: Results, Sensitivity, and Limitations
 
-**Forecast Products**
-- +12 h and +24 h 500 hPa geopotential height anomaly
-- Error maps (forecast − analysis)
-- Relative vorticity evolution
+**Experiment Matrix**
 
-**Verification Metrics (inner domain 25°N–55°N, 90°E–145°E)**
-- RMSE of height anomaly and full height field
-- Spatial pattern correlation (anomaly correlation coefficient)
-- Vorticity correlation
+| Experiment     | Description                              |
+| -------------- | ---------------------------------------- |
+| PERSIST        | Persistence: initial anomaly unchanged   |
+| CTRL           | BVE only                                 |
+| DIFF           | BVE + vorticity diffusion (2.5×10⁴ m²/s) |
+| SPONGE         | BVE + boundary sponge (8 pts, τ=6 h)    |
+| DIFF\_SPONGE   | Diffusion + sponge combined              |
 
-**Results (inner domain 25°N–55°N, 90°E–145°E)**
+**Verification Scores** (inner domain 25°N–55°N, 90°E–145°E)
 
-| Metric                      | +12 h  | +24 h  |
-| --------------------------- | ------ | ------ |
-| Height anom. RMSE           | 81 m   | 547 m  |
-| Height anom. correlation    | 0.97   | 0.52   |
-| Vorticity correlation       | 0.33   | 0.23   |
-| Height bias                 | +60 m  | +498 m |
+| Experiment       | +12h RMSE | +24h RMSE | +24h ACC |
+| ---------------- | --------: | --------: | -------: |
+| PERSIST          | 42.9      | 70.3      | 0.953    |
+| **CTRL**         | 55.4      | **56.6**  | **0.963**|
+| DIFF             | 55.9      | 57.9      | 0.960    |
+| SPONGE           | 50.8      | 69.0      | 0.960    |
+| DIFF\_SPONGE     | 52.2      | 71.9      | 0.956    |
 
-- +12 h: excellent pattern skill (ACC = 0.97); model captures Rossby-wave
-  propagation well
-- +24 h: systematic positive bias (+498 m) from accumulated boundary
-  contamination and missing divergence damping
-- Centred RMSE at +24 h ≈ 227 m after bias correction
+**Key Findings**
+- CTRL slightly outperforms persistence at +24 h (RMSE 56.6 vs 70.3 m),
+  indicating the BVE captures useful dynamical evolution
+- Diffusion and sponge provide negligible +24 h improvement —
+  the Dirichlet boundary configuration is already stable for short forecasts
+- The case is highly persistent; persistence is a strong baseline
 
 **Limitations**
 | Limitation | Impact |
 | ---------- | ------ |
-| No divergence | Cannot capture vertical motion, cyclone development |
+| Non-divergent | Cannot capture cyclone development |
 | Single level | No baroclinic processes |
-| Periodic BCs | Boundary contamination in regional domain |
-| ~1° resolution | Only synoptic scales resolved |
-| No physics | No friction, orography, or diabatic forcing |
-| Single case | Not statistically representative |
+| Fixed ψ=0 boundaries | No time-varying lateral forcing |
+| One case only | Not statistically representative |
+| ~100 km resolution | Only synoptic scales resolved |
 
 **Conclusion**
-- The BVE captures the first-order Rossby-wave dynamics of a winter case
-- A correct, reproducible, simple model can outperform persistence at 12–24 h
-- This is a **pedagogical dynamical core**, not an operational forecast system
+A clean Lambert finite-area BVE with persistence baseline and sensitivity
+diagnosis, not a tuned model comparison.

@@ -6,7 +6,7 @@ and vorticity correlation between forecast and analysis fields.
 """
 
 import numpy as np
-from .poisson_fft import solve_poisson_fft, laplacian_fft
+from .poisson_dirichlet import laplacian_dirichlet as laplacian_fft
 
 
 def anomaly_correlation(fcst, anal, mask=None):
