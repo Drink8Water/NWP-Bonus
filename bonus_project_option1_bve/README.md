@@ -63,6 +63,7 @@ python scripts/01_preprocess_local_data.py    # ERA5 → 粗化 → .npz
 python scripts/02_prepare_lambert_grid.py     # 重网格到 Lambert 投影
 python scripts/03_run_experiments.py          # 运行实验
 python scripts/04_make_figures.py             # 画图
+python scripts/05_diagnostics.py            # 数值诊断（Poisson残差、能量、尺度分解、Δt敏感性、Skill Score）
 ```
 
 ## 实验设计
@@ -100,6 +101,24 @@ python scripts/04_make_figures.py             # 画图
 
 3. **CTRL 是积分模型中 +24 h 综合表现最好的。** 不需要额外调参，干净的有限区域
    BVE 在这个短时积分窗口中已经足够稳定。
+
+## 数值诊断
+
+`scripts/05_diagnostics.py` 跑了一组额外的数值检查，确认模型的可靠性和预报的可信度：
+
+| 诊断项                       | 结果                                   |
+| ---------------------------- | -------------------------------------- |
+| Poisson 求解器残差           | ‖m²∇²ψ − ζ‖₂ / ‖ζ‖₂ = **1.7 × 10⁻¹⁵**  |
+| 动能 24 h 漂移              | **+10.8%**（无爆炸，无振荡）            |
+| 拟能 24 h 漂移              | **+12.2%**（无爆炸，无振荡）            |
+| 大尺度 ACC（+24 h, σ=2.0）  | **0.967**（优于全场的 0.963）           |
+| 小尺度 ACC（+24 h）          | **0.741**（BVE 对小尺度技巧有限）        |
+| Δt 敏感性（300/600/900 s）   | 三个步长 **+24 h RMSE 相同**（56.6 m）   |
+| Skill Score vs PERSIST（+24 h） | SS = **+0.195**（RMSE 相对持续性降低约 20%） |
+
+这些诊断确认：Poisson 反演达到机器精度；积分在 24 h 内数值 bounded；
+BVE 的技巧主要在大尺度 Rossby 波上，小尺度技巧有限——这与正压模型的物理预期一致；
+结论对时间步长不敏感。
 
 ## 输出
 

@@ -3,7 +3,9 @@
 import numpy as np
 import cartopy.crs as ccrs
 
-from .grid import A, OMEGA, G
+A = 6.371e6          # Earth radius (m)
+OMEGA = 7.292e-5     # Earth rotation rate (s⁻¹)
+G = 9.80665          # Gravity (m s⁻²)
 
 
 def _haversine(lon1, lat1, lon2, lat2):
