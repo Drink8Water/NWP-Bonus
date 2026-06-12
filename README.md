@@ -84,6 +84,40 @@ python scripts/04_make_figures.py
 python scripts/05_diagnostics.py
 ```
 
+## 项目结构
+
+```
+bonus_project_option1_bve/
+├── README.md                         # （本文件在父目录）
+├── environment.yml                   # conda 环境
+├── .gitignore
+├── data/
+│   ├── raw/                          # 放原始 ERA5 .nc 文件
+│   ├── processed/                    # 01 输出：粗化后的经纬度 .npz
+│   └── processed_lambert/            # 02 输出：Lambert 网格上的 .npz
+├── src/
+│   ├── bve_model_lambert.py          # Lambert BVE 动力核心
+│   ├── poisson_dirichlet.py          # DST Poisson 求解器 (ψ=0)
+│   ├── lambert_grid.py               # Lambert 投影网格构建
+│   ├── operators.py                  # 差分算子 + Arakawa Jacobian
+│   ├── interpolation.py              # 双线性插值
+│   ├── preprocess.py                 # ERA5 读取、粗化、变量检测
+│   ├── verification.py               # RMSE / ACC / bias / 去偏 RMSE
+│   └── plotting.py                   # Lambert 曲边地图 + 评分图
+├── scripts/
+│   ├── 01_preprocess_local_data.py   # ERA5 → 粗化 → .npz
+│   ├── 02_prepare_lambert_grid.py    # 经纬度 → Lambert 重网格
+│   ├── 03_run_experiments.py         # 运行 5 个实验
+│   ├── 04_make_figures.py            # 画图
+│   └── 05_diagnostics.py             # 数值诊断
+├── outputs/                          # 预报场、验证场、评分 JSON
+├── figures/                          # 输出的 .png 图
+├── note/
+│   └── technical_note.md             # 技术笔记
+└── slides/
+    └── slides_outline.md             # 展示大纲
+```
+
 ## 输出文件
 
 ### 数据与评分

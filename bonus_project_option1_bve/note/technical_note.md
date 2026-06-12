@@ -4,6 +4,38 @@
 
 ---
 
+## Project Layout
+
+```
+bonus_project_option1_bve/
+├── environment.yml
+├── data/
+│   ├── raw/                          # ERA5 .nc (user-provided)
+│   ├── processed/                    # coarsened lat-lon .npz
+│   └── processed_lambert/            # Lambert-grid .npz
+├── src/
+│   ├── bve_model_lambert.py          # Lambert BVE dynamical core
+│   ├── poisson_dirichlet.py          # DST Poisson solver (ψ = 0)
+│   ├── lambert_grid.py               # Lambert conformal grid
+│   ├── operators.py                  # centred differences + Arakawa Jacobian
+│   ├── interpolation.py              # bilinear interpolation
+│   ├── preprocess.py                 # ERA5 I/O, coarsening, variable detection
+│   ├── verification.py               # RMSE, ACC, bias, debiased RMSE
+│   └── plotting.py                   # curved-boundary Lambert maps
+├── scripts/
+│   ├── 01_preprocess_local_data.py   # ERA5 → coarsened lat-lon .npz
+│   ├── 02_prepare_lambert_grid.py    # lat-lon → Lambert regrid
+│   ├── 03_run_experiments.py         # PERSIST / CTRL / DIFF / SPONGE / DIFF+SPONGE
+│   ├── 04_make_figures.py            # verification figures
+│   └── 05_diagnostics.py             # Poisson residual, energy, scale decomp, Δt sensitivity, Skill Score
+├── outputs/
+├── figures/
+├── note/technical_note.md
+└── slides/slides_outline.md
+```
+
+---
+
 ## 1. Case And Data
 
 The case is a winter East Asian 500 hPa flow pattern initialized at
