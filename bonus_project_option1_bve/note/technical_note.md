@@ -6,6 +6,8 @@
 
 ## Project Layout
 
+![Project layout diagram](../../layout.png)
+
 ```
 bonus_project_option1_bve/
 ├── environment.yml

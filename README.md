@@ -86,6 +86,8 @@ python scripts/05_diagnostics.py
 
 ## 项目结构
 
+![Project layout diagram](layout.png)
+
 ```
 bonus_project_option1_bve/
 ├── README.md                         # （本文件在父目录）
