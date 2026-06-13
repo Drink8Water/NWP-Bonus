@@ -1,55 +1,56 @@
 # Lambert BVE Forecast Experiment — Bonus Project Option 1
 
-## 项目目标
+## 1. Overview
 
-本项目使用正压涡度方程（Barotropic Vorticity Equation, BVE）对一次
-东亚 500 hPa 冬季环流过程进行 12–24 h 短时预报实验。当前版本的动力核心
-已经改为 **Lambert conformal 有限区域模式**：
+This project uses a finite-area barotropic vorticity equation (BVE) model on a
+**Lambert conformal projection grid** to produce 12–24 h short-range forecasts
+of a winter East Asian 500 hPa circulation pattern.
 
-- 模式网格：Lambert 投影平面规则网格；
-- 动力变量：流函数 `ψ` 和相对涡度 `ζ`；
-- 地图因子：使用空间变化的 `m(i,j)`；
-- Coriolis 参数：使用空间变化的 `f(i,j)`；
-- Poisson 反演：固定边界 `ψ = 0`，使用离散正弦变换求解；
-- 验证指标：高度距平 RMSE、去偏 RMSE、ACC、bias、涡度相关。
+- Grid: Lambert conformal projection, regular image-plane grid.
+- Prognostic variables: streamfunction `ψ` and relative vorticity `ζ`.
+- Spatially varying map factor `m(i,j)` and Coriolis parameter `f(i,j)`.
+- Poisson inversion: Dirichlet boundaries `ψ = 0`, solved via discrete sine
+  transform.
+- Verification metrics: height-anomaly RMSE, debiased RMSE, ACC, bias,
+  vorticity correlation.
 
-## 个例
+The workflow follows a standard forecast–verification cycle:
 
-| 项目 | 值 |
+> ERA5 reanalysis → initial condition → numerical model → 12–24 h forecast
+> → verification against ERA5 analysis
+
+## 2. Case and Data
+
+| Item | Value |
 | --- | --- |
-| 初始时间 | 2025-12-30 00 UTC |
-| +12 h 验证 | 2025-12-30 12 UTC |
-| +24 h 验证 | 2025-12-31 00 UTC |
-| 等压面 | 500 hPa |
-| 原始资料区域 | 15°N–65°N, 60°E–170°E |
-| 验证子区域 | 25°N–55°N, 90°E–145°E |
-| Lambert 标准纬线 | 25°N / 45°N |
-| Lambert 网格距 | 150 km |
+| Initial time | 2025-12-30 00 UTC |
+| +12 h verification | 2025-12-30 12 UTC |
+| +24 h verification | 2025-12-31 00 UTC |
+| Pressure level | 500 hPa |
+| Source domain | 15°N–65°N, 60°E–170°E |
+| Verification subdomain | 25°N–55°N, 90°E–145°E |
+| Lambert standard parallels | 25°N / 45°N |
+| Lambert grid spacing | 150 km |
 
-ERA5 再分析资料提供初始场和验证场。使用变量为 500 hPa 位势高度（或 geopotential）、
-u 风和 v 风。
+**Why 2025-12-30?** December is deep winter over East Asia. Baroclinic
+energy conversion is weaker than in spring or autumn, so 500 hPa evolution
+is more barotropically governed — a fair test for a single-level BVE model.
+The pattern is slowly evolving (persistence ACC = 0.953 at +24 h), giving the
+model room to show skill beyond trivial persistence without facing a rapidly
+deepening cyclone that a non-divergent model cannot handle. The date also
+falls at the end of the latest available full month of ERA5 data when the
+project was run. Finally, late December features a well-developed East Asian
+winter monsoon Rossby wave train, ideal for testing the model's large-scale
+wave propagation skill.
 
-### 为什么选 2025-12-30？
+**Data source:** ERA5 pressure-level reanalysis (Hersbach et al., 2020) at
+500 hPa, 0.25° global grid, 6-hourly analysis fields. Required variables are
+geopotential (`z`), u-wind (`u`), and v-wind (`v`).
 
-选择这个个例主要基于以下考虑：
+## 3. Model
 
-1. **冬季正压性更强。** 12 月底东亚中纬度西风带盛行，斜压能量转换（baroclinic conversion）
-   相对弱于春季和秋季，500 hPa 环流演变更多由正压 Rossby 波频散主导，
-   这让 BVE 模型在物理上更有机会展现预报技巧。
-2. **缓慢演变的环流背景。** 该个例持续性基准 ACC 达 0.953（+24 h），
-   说明天气形势相对稳定——不是快速发展的爆发性气旋或强非线性过程。
-   对正压短时预报实验而言，半静稳态环流是合适的"公平测试"：
-   既不完全 trivial（持续性 +24 h RMSE 仍有 70.3 m），
-   又不至于让单层无辐散模型毫无胜算。
-3. **数据时效性。** 项目运行时最新可获取的完整月份 ERA5 数据为 2025 年 12 月，
-   月末时段（30–31 日）拥有完整的初始场和验证场配对。
-4. **东亚区域代表性。** 12 月下旬是东亚冬季风活跃期，
-   域内通常存在清晰的高-低-高 Rossby 波列，适合验证动力核心对
-   大尺度波的传播和频散模拟能力。
-
-## 模型方程
-
-Lambert conformal 投影平面上的有限区域 BVE 写成：
+The governing equation is the barotropic vorticity equation on a Lambert
+conformal projection plane:
 
 $$
 \frac{\partial \zeta}{\partial t}
@@ -57,213 +58,232 @@ $$
   + \nu m^2\nabla^2\zeta
   - \alpha(\zeta-\zeta_0),
 \qquad
-\zeta = m^2\nabla^2\psi.
+\zeta = m^2\nabla^2\psi .
 $$
 
-其中 `m(i,j)` 是 Lambert 地图比例因子，`f(i,j)=2Ωsinφ`，`ν` 是可选涡度扩散系数，
-`α` 是可选边界海绵松弛系数。CTRL 实验取 `ν=0`、无海绵。
+Here `m(i,j)` is the Lambert map factor and `f(i,j) = 2Ω sin φ` is the local
+Coriolis parameter. The optional terms `ν` (vorticity diffusion) and `α`
+(boundary sponge relaxation) are zero in the CTRL experiment and switched on
+for sensitivity diagnosis only.
 
-高度距平由平衡关系诊断得到：
+The model predicts vorticity and streamfunction. Forecast height anomaly is
+diagnosed by the geostrophic relation
 
 $$
 Z' = \frac{f\psi}{g}.
 $$
 
-当前模式不预报绝对域平均高度，因此不再报告 full-field RMSE；所有高度评分均基于
-高度距平、bias 和去偏 RMSE。
+The model does not predict absolute domain-mean height; all height scores are
+therefore based on height anomaly, bias, and debiased RMSE.
 
-## 数值方法
+## 4. Numerical Configuration
 
-- **空间离散**：Lambert 投影平面规则网格，二阶中心差分。
-- **Jacobian**：Arakawa Jacobian。
-- **时间积分**：四阶 Runge–Kutta，`Δt = 600 s`。
-- **Poisson 求解**：固定边界 `ψ = 0`，离散正弦变换求解。
-- **Lambert 网格**：54 × 34，`d = 150 km`，约覆盖 56°E–174°E, 12°N–62°N。
-- **验证区域**：25°N–55°N, 90°E–145°E。
+- **Spatial discretisation:** second-order centred differences on a regular
+  Lambert image-plane grid.
+- **Jacobian:** Arakawa scheme (energy and enstrophy conserving).
+- **Time integration:** fourth-order Runge–Kutta, `Δt = 600 s`.
+- **Poisson solver:** discrete sine transform (DST) with Dirichlet boundary
+  `ψ = 0` on all four sides.
+- **Grid:** 54 × 34 points, `d = 150 km`, covering approximately
+  56°E–174°E, 12°N–62°N.
+- **Verification region:** 25°N–55°N, 90°E–145°E.
 
-## 环境配置
+Optional sensitivity terms:
 
-使用 conda 创建虚拟环境：
+| Term | Symbol | CTRL value | Sensitivity value |
+| --- | --- | --- | --- |
+| Vorticity diffusion | `ν` | 0 | `2.5 × 10⁴ m² s⁻¹` |
+| Boundary sponge | `α` | 0 | τ = 6 h over 8 boundary points |
+
+## 5. How to Run
+
+### Environment
 
 ```bash
 conda env create -f bonus_project_option1_bve/environment.yml
 conda activate bve-nwp
 ```
 
-核心依赖包括 NumPy、SciPy、xarray、netCDF4、Matplotlib、Cartopy。
+Core dependencies: NumPy, SciPy, xarray, netCDF4, Matplotlib, Cartopy.
 
-## 数据获取
+### Data
 
-本项目使用 **ERA5 再分析资料**，可从
-[Copernicus CDS](https://cds.climate.copernicus.eu/) 下载。
+ERA5 data can be downloaded from the
+[Copernicus CDS](https://cds.climate.copernicus.eu/). Place the NetCDF file
+(500 hPa geopotential, u, v; December 2025; 6-hourly; 0.25°) as
+`bonus_project_option1_bve/data/raw/202512.nc`.
 
-需要的数据：
-
-| 需求 | 说明 |
-| --- | --- |
-| 时间段 | 2025 年 12 月（至少包含 29–31 日） |
-| 等压面 | 500 hPa |
-| 时间分辨率 | 逐 6 小时分析场（00/06/12/18 UTC） |
-| 空间分辨率 | 0.25° 全球网格 |
-| 变量 | geopotential (`z`)、u 风 (`u`)、v 风 (`v`) |
-| 格式 | NetCDF（GRIB 可用 `cfgrib` 直接读取或先转换为 NetCDF） |
-
-仓库根目录的 **`202512.nc`**（约 600 MB，已通过 `.gitignore` 排除版本控制）
-即为上述数据的本地副本。若该文件不存在，请将下载好的 NetCDF 文件放置于
-仓库根目录并命名为 `202512.nc`，预处理脚本 `01_preprocess_local_data.py`
-会从中提取所需时段与区域。
-
-## 怎么跑
-
-数据放入 `bonus_project_option1_bve/data/raw/` 后，按当前 Lambert 工作流运行：
+### Pipeline
 
 ```bash
-# 1. 预处理 ERA5 到规则经纬度中间网格
+# 1. Preprocess ERA5 to a regular lat-lon intermediate grid
 python scripts/01_preprocess_local_data.py
 
-# 2. 插值到 Lambert 模式网格
+# 2. Interpolate to the Lambert model grid
 python scripts/02_prepare_lambert_grid.py
 
-# 3. 运行 Lambert BVE 实验矩阵
+# 3. Run the Lambert BVE experiment matrix
 python scripts/03_run_experiments.py
 
-# 4. 生成 Lambert 结果图
+# 4. Generate verification figures
 python scripts/04_make_figures.py
 
-# 5. 数值诊断（Poisson 残差、能量守恒、尺度分解、Δt 敏感性、Skill Score）
+# 5. Numerical diagnostics (Poisson residual, energy, scale decomposition,
+#    Δt sensitivity, Skill Score)
 python scripts/05_diagnostics.py
 ```
 
-## 项目结构
+## 6. Main Outputs
+
+### Project structure
 
 ![Project layout diagram](layout.png)
 
 ```
 .
 ├── README.md
-├── layout.png                         # 项目结构概览图
-├── cheatsheet_BP1.md                  # 课程公式与数值方法速查表
-├── 202512.nc                          # ERA5 原始数据（~600 MB, gitignored）
+├── layout.png
+├── cheatsheet_BP1.md
 ├── .gitignore
 └── bonus_project_option1_bve/
-    ├── environment.yml                 # conda 环境
+    ├── environment.yml
     ├── .gitignore
     ├── data/
-    │   ├── raw/                        # 放原始 ERA5 .nc 文件
-    │   ├── processed/                  # 01 输出：粗化后的经纬度 .npz
-    │   └── processed_lambert/          # 02 输出：Lambert 网格上的 .npz
+    │   ├── raw/                          # ERA5 .nc input (e.g. 202512.nc)
+    │   ├── processed/                    # coarsened lat-lon .npz
+    │   └── processed_lambert/            # Lambert-grid .npz
     ├── src/
-    │   ├── bve_model_lambert.py        # Lambert BVE 动力核心
-    │   ├── poisson_dirichlet.py        # DST Poisson 求解器 (ψ=0)
-    │   ├── lambert_grid.py             # Lambert 投影网格构建
-    │   ├── operators.py                # 差分算子 + Arakawa Jacobian
-    │   ├── interpolation.py            # 双线性插值
-    │   ├── preprocess.py               # ERA5 读取、粗化、变量检测
-    │   ├── verification.py             # RMSE / ACC / bias / 去偏 RMSE
-    │   └── plotting.py                 # Lambert 曲边地图 + 评分图
+    │   ├── bve_model_lambert.py          # Lambert BVE dynamical core
+    │   ├── poisson_dirichlet.py          # DST Poisson solver (ψ = 0)
+    │   ├── lambert_grid.py               # Lambert conformal grid builder
+    │   ├── operators.py                  # centred differences + Arakawa Jacobian
+    │   ├── interpolation.py              # bilinear interpolation
+    │   ├── preprocess.py                 # ERA5 I/O, coarsening, variable detection
+    │   ├── verification.py               # RMSE / ACC / bias / debiased RMSE
+    │   └── plotting.py                   # curved-boundary Lambert maps + score plots
     ├── scripts/
-    │   ├── 01_preprocess_local_data.py # ERA5 → 粗化 → .npz
-    │   ├── 02_prepare_lambert_grid.py  # 经纬度 → Lambert 重网格
-    │   ├── 03_run_experiments.py       # 运行 5 个实验
-    │   ├── 04_make_figures.py          # 画图
-    │   └── 05_diagnostics.py           # 数值诊断
-    ├── outputs/                        # 预报场、验证场、评分 JSON
-    ├── figures/                        # 输出的 .png 图
+    │   ├── 01_preprocess_local_data.py   # ERA5 → coarsened lat-lon .npz
+    │   ├── 02_prepare_lambert_grid.py    # lat-lon → Lambert regrid
+    │   ├── 03_run_experiments.py         # run 5 experiments
+    │   ├── 04_make_figures.py            # verification figures
+    │   └── 05_diagnostics.py             # numerical diagnostics
+    ├── outputs/                          # forecast, verification, scores JSON
+    ├── figures/                          # output .png files
     ├── note/
-    │   └── technical_note.md           # 技术笔记
+    │   └── technical_note.md             # technical note
     └── slides/
-        └── slides_outline.md           # 展示大纲
+        └── slides_outline.md             # presentation outline
 ```
 
-## 输出文件
+### Data and scores
 
-### 数据与评分
-
-| 文件 | 内容 |
+| File | Content |
 | --- | --- |
-| `data/processed/*.npz` | ERA5 经初步处理后的经纬度网格场 |
-| `data/processed_lambert/*.npz` | 插值到 Lambert 模式网格后的场 |
-| `data/processed_lambert/grid_info_lambert.npz` | Lambert 网格、`m(i,j)`、`f(i,j)` |
-| `outputs/*_LCC_forecast_*.npz` | Lambert 实验预报 `ψ, ζ` |
-| `outputs/*_LCC_verification_*.npz` | Lambert 实验验证数组 |
-| `outputs/scores_experiment_matrix.json` | Lambert 实验评分 |
-| `outputs/diagnostics.json` | 数值诊断结果（Poisson 残差、能量、尺度分解、Δt 敏感性、Skill Score） |
+| `data/processed/*.npz` | ERA5 on the coarsened lat-lon grid |
+| `data/processed_lambert/*.npz` | Fields interpolated to the Lambert model grid |
+| `data/processed_lambert/grid_info_lambert.npz` | Lambert grid, `m(i,j)`, `f(i,j)` |
+| `outputs/*_LCC_forecast_*.npz` | Forecast `ψ, ζ` for each experiment |
+| `outputs/*_LCC_verification_*.npz` | Verification arrays for each experiment |
+| `outputs/scores_experiment_matrix.json` | Experiment scores |
+| `outputs/diagnostics.json` | Diagnostics (Poisson residual, energy, scale, Δt, SS) |
 
-### 图片
+### Figures
 
-| 文件 | 内容 |
+| File | Content |
 | --- | --- |
-| `figures/fig13_lambert_ctrl_verification_12h.png` | Lambert CTRL +12 h 预报/分析/误差 |
-| `figures/fig13_lambert_ctrl_verification_24h.png` | Lambert CTRL +24 h 预报/分析/误差 |
-| `figures/fig14_lambert_experiment_scores.png` | Lambert 实验评分对比 |
-| `figures/fig15_lambert_impact_summary.png` | Lambert 实验影响汇总图 |
+| `figures/fig13_lambert_ctrl_verification_12h.png` | CTRL +12 h forecast / analysis / error maps |
+| `figures/fig13_lambert_ctrl_verification_24h.png` | CTRL +24 h forecast / analysis / error maps |
+| `figures/fig14_lambert_experiment_scores.png` | Experiment score comparison |
+| `figures/fig15_lambert_impact_summary.png` | Experiment impact summary |
 
-## 地图绘制说明
+### A note on display maps
 
-地图使用 Lambert Conformal 投影。`src/plotting.py` 中的
-`set_lambert_curved_boundary()` 会把原始经纬度资料边界投影到 Lambert 平面，并用该
-曲边四边形替换 Cartopy 默认矩形 Axes：
+Maps use a curved Lambert boundary defined by `set_lambert_curved_boundary()`
+in `src/plotting.py` and are clipped to the source-domain footprint.
+For visual consistency with the report, the Lambert forecast field is
+interpolated to the original lat-lon display grid and smoothly tapered near
+the model boundary. This display interpolation does **not** affect the
+quantitative scores — all verification uses the native Lambert model grid.
 
-- 左右边界：固定经度线；
-- 上下边界：固定纬度线；
-- 填色、海岸线、国界线和经纬网均裁剪在该曲边边界内；
-- 不再显示默认矩形地图外框。
+## 7. Main Results
 
-`fig13` 展示 Lambert 模式结果。由于动力模式网格比报告展示用经纬度 footprint 略小，
-绘图时将 Lambert 预报场插值到原始经纬度展示网格，并在模式边缘附近做平滑 taper，
-避免出现硬矩形接缝。该处理仅用于展示；定量评分仍来自 Lambert 原生模式网格。
+All scores are computed on the verification subdomain (25°N–55°N, 90°E–145°E).
 
-## Lambert 实验结果
+| Experiment | Lead | RMSE (m) | Debiased RMSE (m) | Bias (m) | ACC |
+| --- | --- | ---: | ---: | ---: | ---: |
+| PERSIST_LCC | +12 h | 42.9 | 41.4 | −11.1 | 0.985 |
+| PERSIST_LCC | +24 h | 70.3 | 69.2 | −12.5 | 0.953 |
+| CTRL_LCC | +12 h | 55.4 | 54.1 | +12.1 | 0.975 |
+| CTRL_LCC | +24 h | 56.6 | 55.7 | +10.0 | 0.963 |
+| DIFF_LCC | +12 h | 55.9 | 55.1 | +9.7 | 0.973 |
+| DIFF_LCC | +24 h | 57.9 | 57.9 | −1.0 | 0.960 |
+| SPONGE_LCC | +12 h | 50.8 | 50.7 | +2.6 | 0.980 |
+| SPONGE_LCC | +24 h | 69.0 | 69.0 | +1.6 | 0.960 |
+| DIFF_SPONGE_LCC | +12 h | 52.2 | 52.1 | +1.4 | 0.978 |
+| DIFF_SPONGE_LCC | +24 h | 71.9 | 71.8 | −1.7 | 0.956 |
 
-评分均在 25°N–55°N, 90°E–145°E 验证子区域内计算。
+**Interpretation.** The case is highly persistent: PERSIST_LCC already
+achieves +24 h ACC of 0.953. At +12 h, persistence gives the lowest RMSE,
+indicating the true atmospheric evolution is still small. At +24 h, CTRL_LCC
+improves RMSE from 70.3 m to 56.6 m and ACC from 0.953 to 0.963, suggesting
+useful large-scale phase-evolution skill. Diffusion and sponge experiments
+(DIFF_LCC, SPONGE_LCC, DIFF_SPONGE_LCC) are sensitivity diagnostics; they do
+not further reduce +24 h RMSE, confirming that the Dirichlet boundary
+configuration is already numerically stable for 24 h forecasts.
 
-| 实验 | +12 h RMSE | +24 h RMSE | +12 h ACC | +24 h ACC | 说明 |
-| --- | ---: | ---: | ---: | ---: | --- |
-| PERSIST_LCC | 42.9 m | 70.3 m | 0.985 | 0.953 | 持续性基准 |
-| CTRL_LCC | 55.4 m | 56.6 m | 0.975 | 0.963 | Lambert BVE 主实验 |
-| DIFF_LCC | 55.9 m | 57.9 m | 0.973 | 0.960 | 加弱涡度扩散 |
-| SPONGE_LCC | 50.8 m | 69.0 m | 0.980 | 0.960 | 加边界海绵 |
-| DIFF_SPONGE_LCC | 52.2 m | 71.9 m | 0.978 | 0.956 | 扩散 + 海绵 |
+## 8. Diagnostics
 
-当前个例高度场非常稳定，PERSIST_LCC 是很强的基准。Lambert CTRL 在 +24 h
-RMSE 和 ACC 上表现最好；扩散和海绵在该配置下主要起诊断作用，并未继续降低 +24 h RMSE。
+`scripts/05_diagnostics.py` performs five additional checks of numerical
+reliability:
 
-## 数值诊断
-
-`scripts/05_diagnostics.py` 附带 5 项额外检查，验证模型的数值可靠性：
-
-| 诊断项 | 结果 |
+| Diagnostic | Result |
 | --- | --- |
-| Poisson 求解器残差 | ‖m²∇²ψ − ζ‖₂ / ‖ζ‖₂ = **1.7 × 10⁻¹⁵**（机器精度） |
-| 动能 24 h 漂移 | **+10.8%**（无爆炸、无振荡，积分 bounded） |
-| 拟能 24 h 漂移 | **+12.2%**（无爆炸、无振荡） |
-| 大尺度 ACC（+24 h, σ=2.0 Gaussian） | **0.967**（优于全场 ACC 0.963） |
-| 小尺度 ACC（+24 h） | 0.741（BVE 对小尺度技巧有限，符合物理预期） |
-| Δt 敏感性（300 / 600 / 900 s） | 三个步长 **+24 h RMSE 完全相同**（56.6 m） |
-| Skill Score vs PERSIST（+12 h） | SS = **−0.29**（持续性更优，诚实承认） |
-| Skill Score vs PERSIST（+24 h） | SS = **+0.195**（RMSE 相对持续性降低约 20%） |
+| Poisson solver residual | ‖m²∇²ψ − ζ‖₂ / ‖ζ‖₂ = **1.7 × 10⁻¹⁵** (machine precision) |
+| Kinetic energy 24 h drift | **+10.8%** (bounded, no blow-up) |
+| Enstrophy 24 h drift | **+12.2%** (bounded, no blow-up) |
+| Large-scale ACC (+24 h, σ = 2.0 Gaussian) | **0.967** (exceeds full-field ACC 0.963) |
+| Small-scale ACC (+24 h) | 0.741 (BVE has limited small-scale skill, as expected) |
+| Δt sensitivity (300 / 600 / 900 s) | +24 h RMSE identical at **56.6 m** for all three |
+| Skill Score vs PERSIST (+12 h) | SS = **−0.29** (persistence wins at short lead) |
+| Skill Score vs PERSIST (+24 h) | SS = **+0.195** (~20% RMSE reduction vs persistence) |
 
-这些诊断确认：(1) Poisson 反演可靠；(2) 非线性积分在 24 h 窗口内数值稳定；
-(3) BVE 的技巧集中在大尺度 Rossby 波上，符合正压模型的物理能力；
-(4) 主要结论对时间步长不敏感；(5) +24 h CTRL 相对于持续性有正技巧，
-但 +12 h 持续性仍更强——这与缓慢演变冬季环流的预期一致。
+These confirm: (1) the Poisson inversion is reliable to machine precision;
+(2) the nonlinear integration is numerically stable over 24 h;
+(3) BVE skill is concentrated at large scales (Rossby waves), consistent
+with barotropic dynamics; (4) conclusions are insensitive to time-step
+choice; (5) CTRL_LCC shows positive skill over persistence at +24 h, while
+persistence remains stronger at +12 h — consistent with a slowly evolving
+winter circulation.
 
-## 已知局限
+## 9. Limitations
 
-1. **单层正压模型。** 无辐散、无垂直结构、无斜压过程。
-2. **高度恢复是诊断近似。** 当前使用 `Z'=fψ/g`，更严格版本应解线性平衡方程。
-3. **固定边界仍是理想化边界。** `ψ=0` 消除了周期穿越问题，但仍不是真实侧边界条件。
-4. **单个个例。** 结果不能代表模型在所有天气形势下的统计表现。
-5. **展示插值不参与评分。** `fig13` 为报告视觉一致性做了边缘平滑；评分仍使用原生 Lambert 网格。
+1. **Single-level barotropic model.** No divergence, vertical structure, or
+   baroclinic processes.
+2. **Diagnostic height recovery.** The current `Z' = fψ/g` is a first-order
+   geostrophic height-anomaly approximation. It is simpler than solving the
+   linear balance equation, so the reported height scores should be
+   interpreted as balanced anomaly scores rather than full geopotential-height
+   verification.
+3. **Fixed Dirichlet boundaries.** `ψ = 0` on all sides eliminates
+   wrap-around issues but does not provide time-dependent lateral forcing.
+4. **Single case.** Results are not statistically representative of model
+   performance across all weather regimes.
+5. **Display interpolation is separate from scoring.** Figure 13
+   interpolates to a lat-lon display grid with edge tapering for visual
+   consistency; quantitative scores use the native Lambert model grid.
+   
 
-## 辅助文档
+## 10. References
 
-- **[cheatsheet_BP1.md](cheatsheet_BP1.md)** — 课程公式与数值方法速查表，涵盖 BPE/BVE/SW 三种模型的方程、
-  符号约定、离散化方法和实现建议。适合在阅读代码前快速回顾理论基础。
+- Arakawa, A. (1966). Computational design for long-term numerical
+  integration of the equations of fluid motion. *J. Comput. Phys.*, 1,
+  119–143.
+- Haltiner, G. J., and R. T. Williams (1980). *Numerical Prediction and
+  Dynamic Meteorology*, 2nd ed., Wiley.
+- Hersbach, H., et al. (2020). The ERA5 global reanalysis. *Quart. J. Roy.
+  Meteorol. Soc.*, 146, 1999–2049.
+- Holton, J. R., and G. J. Hakim (2013). *An Introduction to Dynamic
+  Meteorology*, 5th ed., Academic Press.
 
-## 参考文献
-
-- Arakawa, A. (1966). Computational design for long-term numerical integration of the equations of fluid motion. *J. Comput. Phys.*, 1, 119–143.
-- Haltiner, G. J., and R. T. Williams (1980). *Numerical Prediction and Dynamic Meteorology*, 2nd ed., Wiley.
-- Holton, J. R., and G. J. Hakim (2013). *An Introduction to Dynamic Meteorology*, 5th ed., Academic Press.
-- Hersbach, H., et al. (2020). The ERA5 global reanalysis. *Quart. J. Roy. Meteorol. Soc.*, 146, 1999–2049.
+See also: **[cheatsheet_BP1.md](cheatsheet_BP1.md)** — course formula and
+numerical-method reference covering BPE, BVE, and shallow-water models.

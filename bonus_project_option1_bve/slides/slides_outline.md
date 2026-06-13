@@ -2,80 +2,71 @@
 
 ---
 
-## Slide 1: Case, Model, and Workflow
+## Slide 1: Workflow and Model Setup
 
-**Case: East Asian Winter Z500 Circulation**
-- Initial time: 2025-12-30 00 UTC
-- +12 h / +24 h verification: 2025-12-30 12 UTC / 2025-12-31 00 UTC
-- Domain: 15°N–65°N, 60°E–170°E; verification: 25°N–55°N, 90°E–145°E
+**Case:** East Asian winter 500 hPa — 2025-12-30 00 UTC
+(+12 h / +24 h verification)
 
-**Data & Workflow**
+**Workflow:**
+
 ```
-ERA5 Z500, u500, v500
-  → subset East Asia, coarsen to ~1°
-  → interpolate to Lambert conformal grid
-  → construct initial ζ and ψ (geostrophic, ψ=0 on boundaries)
-  → integrate finite-area BVE for 12–24 h (RK4, Δt=600 s)
-  → compare height anomalies with ERA5 verifying analysis
+ERA5 Z500, u500, v500 (0.25°)
+  → subset 15°N–65°N, 60°E–170°E, coarsen to ~1°
+  → interpolate to Lambert conformal grid (54×34, d = 150 km)
+  → initial ζ, ψ from geostrophic balance (ψ = 0 on boundaries)
+  → integrate finite-area BVE 12–24 h (RK4, Δt = 600 s)
+  → verify height anomalies vs ERA5 analysis
 ```
 
-**Model: Barotropic Vorticity Equation on a Lambert Conformal Grid**
+**Model equation:**
 
-$$\frac{\partial\zeta}{\partial t} = -m^2 J(\psi,\zeta+f) + \nu m^2\nabla^2\zeta - \alpha(\zeta-\zeta_{\text{ref}})$$
+$$\frac{\partial\zeta}{\partial t} = -m^2 J(\psi,\zeta+f) + \nu m^2\nabla^2\zeta - \alpha(\zeta-\zeta_0), \qquad \zeta = m^2\nabla^2\psi$$
 
-$$\zeta = m^2\nabla^2\psi$$
+**Key configuration:**
 
-- m: Lambert map factor; f: local Coriolis parameter
-- ψ = 0 on all boundaries (Dirichlet)
-- Poisson inversion via discrete sine transform (DST)
-- Arakawa Jacobian (energy + enstrophy conserving)
-
-**Key Assumptions**
-- Non-divergent, barotropic flow
-- Lambert conformal projection (angle-preserving, suitable for mid-latitudes)
-- Fixed lateral boundaries, no time-dependent forcing
-- No diabatic heating or friction (except explicit sensitivity terms)
+| Item | Setting |
+| --- | --- |
+| Projection | Lambert conformal (25°N / 45°N) |
+| Grid | 54 × 34, d = 150 km |
+| Poisson solver | DST, `ψ = 0` on all boundaries |
+| Jacobian | Arakawa (energy + enstrophy conserving) |
+| Time stepping | RK4, Δt = 600 s |
+| Verification region | 25°N–55°N, 90°E–145°E |
 
 ---
 
-## Slide 2: Results, Sensitivity, and Limitations
+## Slide 2: Results and Interpretation
 
-**Experiment Matrix**
+**Experiment matrix:**
 
-| Experiment     | Description                              |
-| -------------- | ---------------------------------------- |
-| PERSIST        | Persistence: initial anomaly unchanged   |
-| CTRL           | BVE only                                 |
-| DIFF           | BVE + vorticity diffusion (2.5×10⁴ m²/s) |
-| SPONGE         | BVE + boundary sponge (8 pts, τ=6 h)    |
-| DIFF\_SPONGE   | Diffusion + sponge combined              |
+| Experiment | +12 h RMSE | +24 h RMSE | +24 h ACC |
+| --- | ---: | ---: | ---: |
+| PERSIST | 42.9 m | 70.3 m | 0.953 |
+| **CTRL** | 55.4 m | **56.6 m** | **0.963** |
+| DIFF | 55.9 m | 57.9 m | 0.960 |
+| SPONGE | 50.8 m | 69.0 m | 0.960 |
+| DIFF+SPONGE | 52.2 m | 71.9 m | 0.956 |
 
-**Verification Scores** (inner domain 25°N–55°N, 90°E–145°E)
+**Key findings:**
 
-| Experiment       | +12h RMSE | +24h RMSE | +24h ACC |
-| ---------------- | --------: | --------: | -------: |
-| PERSIST          | 42.9      | 70.3      | 0.953    |
-| **CTRL**         | 55.4      | **56.6**  | **0.963**|
-| DIFF             | 55.9      | 57.9      | 0.960    |
-| SPONGE           | 50.8      | 69.0      | 0.960    |
-| DIFF\_SPONGE     | 52.2      | 71.9      | 0.956    |
+- Case is highly persistent (PERSIST ACC = 0.953 at +24 h).
+- At +24 h, CTRL improves RMSE (70.3 → 56.6 m) and ACC (0.953 → 0.963) over
+  persistence, demonstrating useful large-scale phase-evolution skill.
+- Diffusion and sponge are diagnostic sensitivity runs; neither further
+  reduces +24 h RMSE. The Dirichlet boundary configuration is already stable
+  for 24 h forecasts.
 
-**Key Findings**
-- CTRL slightly outperforms persistence at +24 h (RMSE 56.6 vs 70.3 m),
-  indicating the BVE captures useful dynamical evolution
-- Diffusion and sponge provide negligible +24 h improvement —
-  the Dirichlet boundary configuration is already stable for short forecasts
-- The case is highly persistent; persistence is a strong baseline
+**Limitations:**
 
-**Limitations**
 | Limitation | Impact |
-| ---------- | ------ |
-| Non-divergent | Cannot capture cyclone development |
-| Single level | No baroclinic processes |
-| Fixed ψ=0 boundaries | No time-varying lateral forcing |
+| --- | --- |
+| Non-divergent, single-level | No cyclone development or baroclinic processes |
+| `Z' = fψ/g` diagnostic | First-order geostrophic approximation |
+| Fixed `ψ = 0` boundaries | No time-varying lateral forcing |
 | One case only | Not statistically representative |
-| ~100 km resolution | Only synoptic scales resolved |
+| ~150 km resolution | Synoptic scales only |
 
-**Conclusion**
-A clean Lambert finite-area BVE with persistence baseline and sensitivity
-diagnosis, not a tuned model comparison.
+**Conclusion:** A clean Lambert finite-area BVE demonstrates modest but
+physically meaningful +24 h skill over persistence for a slowly evolving
+winter case. Diffusion and sponge are diagnostic confirmations of numerical
+stability, not forecast improvements.
