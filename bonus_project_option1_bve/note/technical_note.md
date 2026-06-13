@@ -110,6 +110,14 @@ discrete sine transform (DST) built with NumPy FFTs in
 standard FFT Poisson solver and is appropriate for the Dirichlet
 finite-area configuration.
 
+![Initial condition](../figures/fig13_lambert_ctrl_verification_12h.png)
+
+**Figure 1.** CTRL_LCC +12 h balanced 500 hPa height-anomaly forecast, ERA5
+verifying analysis, and forecast error on the Lambert model grid. This is the
+earliest forecast snapshot available and reflects the evolution from the
+initial condition at 2025-12-30 00 UTC. The balanced anomaly is diagnosed
+from ERA5 geopotential and used to initialise the BVE model.
+
 ---
 
 ## 4. Numerical Method
@@ -183,6 +191,13 @@ The experiment matrix is run by `scripts/03_run_experiments.py`.
 | SPONGE_LCC | +24 h | 69.0 | 69.0 | +1.6 | 0.960 |
 | DIFF_SPONGE_LCC | +12 h | 52.2 | 52.1 | +1.4 | 0.978 |
 | DIFF_SPONGE_LCC | +24 h | 71.9 | 71.8 | −1.7 | 0.956 |
+
+![CTRL +24 h verification](../figures/fig13_lambert_ctrl_verification_24h.png)
+
+**Figure 2.** CTRL_LCC +24 h balanced height-anomaly forecast, ERA5 verifying
+analysis, and forecast error. The +24 h CTRL run reduces RMSE from 70.3 m in
+persistence to 56.6 m and improves ACC from 0.953 to 0.963, demonstrating
+useful large-scale phase-evolution skill over a purely persistent baseline.
 
 ### 6.2 Interpretation
 
@@ -267,6 +282,24 @@ diffusion and boundary sponge relaxation were examined as diagnostic
 sensitivity experiments; neither further reduces +24 h RMSE, confirming
 that the Dirichlet boundary configuration is numerically stable for 24 h
 forecasts without explicit numerical damping.
+
+---
+
+## Individual Contributions
+
+This project was completed by a two-person group. Yutian Qi (231170026) was
+mainly responsible for the Lambert finite-area BVE model implementation,
+including the model formulation, Arakawa Jacobian, RK4 integration,
+DST-based Poisson inversion, boundary-condition treatment, and numerical
+diagnostics, and contributed to the experimental design and interpretation
+of dynamical results. Yuncan Xiao (231170016) was mainly responsible for
+ERA5 preprocessing, Lambert-grid construction, regridding, forecast
+verification, figure generation, score organization, and documentation
+preparation, and contributed to the selection of the East Asian winter case.
+
+Both members contributed to debugging, result analysis, discussion of model
+limitations, comparison with the persistence baseline, and final revision of
+the README, technical note, and slides.
 
 ---
 

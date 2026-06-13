@@ -70,3 +70,16 @@ $$\frac{\partial\zeta}{\partial t} = -m^2 J(\psi,\zeta+f) + \nu m^2\nabla^2\zeta
 physically meaningful +24 h skill over persistence for a slowly evolving
 winter case. Diffusion and sponge are diagnostic confirmations of numerical
 stability, not forecast improvements.
+
+---
+
+**Individual contributions**
+
+- **Yutian Qi (231170026):** Lambert BVE formulation; Arakawa Jacobian;
+  RK4 integration; DST Poisson inversion; boundary treatment; numerical
+  diagnostics; experimental design; result analysis.
+- **Yuncan Xiao (231170016):** ERA5 preprocessing; Lambert-grid
+  construction; regridding; ERA5 verification; figure generation; score
+  organization; documentation; case selection.
+- **Both:** Debugging; persistence-baseline comparison;
+  model-limitations discussion; final revision.

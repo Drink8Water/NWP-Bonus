@@ -271,7 +271,22 @@ winter circulation.
 5. **Display interpolation is separate from scoring.** Figure 13
    interpolates to a lat-lon display grid with edge tapering for visual
    consistency; quantitative scores use the native Lambert model grid.
-   
+
+## Individual Contributions
+
+This project was completed by a two-person group. The work was divided by
+major technical components while both members participated in the overall
+design, interpretation, and final revision.
+
+| Member | Main Contributions |
+| --- | --- |
+| Yutian Qi (231170026) | Took primary responsibility for the Lambert finite-area BVE model implementation, including the model-equation formulation, Arakawa Jacobian, RK4 time integration, DST-based Poisson inversion, boundary-condition treatment, and numerical-stability diagnostics. Also contributed to the experimental design, result analysis, and the interpretation of dynamical results. |
+| Yuncan Xiao (231170016) | Took primary responsibility for ERA5 data preprocessing, Lambert-grid construction, interpolation from latitude-longitude data to the model grid, forecast verification against ERA5 analyses, figure generation, score organization, and documentation preparation. Also contributed to the selection of the East Asian winter case and final presentation materials. |
+
+Both members contributed to debugging, checking the reproducibility of the
+workflow, comparing the forecast with the persistence baseline, discussing
+model limitations, and revising the final README, technical note, and
+slides.
 
 ## 10. References
 
