@@ -35,12 +35,11 @@ The governing equation is the barotropic vorticity equation (BVE) on a
 Lambert conformal projection plane:
 
 $$
+\begin{aligned}
 \frac{\partial \zeta}{\partial t}
-= -m^2 J(\psi,\zeta+f)
-  + \nu m^2\nabla^2\zeta
-  - \alpha(\zeta-\zeta_0),
-\qquad
-\zeta = m^2\nabla^2\psi .
+&= -m^2 J(\psi,\zeta+f) + \nu m^2\nabla^2\zeta - \alpha(\zeta-\zeta_0), \\[4pt]
+\zeta &= m^2\nabla^2\psi .
+\end{aligned}
 $$
 
 Here `ψ` is streamfunction, `ζ` is relative vorticity, `m(i,j)` is the
