@@ -55,7 +55,7 @@ conformal projection plane:
 $$
 \begin{aligned}
 \frac{\partial \zeta}{\partial t}
-&= -m^2 J(\psi,\zeta+f) + \nu m^2\nabla^2\zeta - \alpha(\zeta-\zeta_0), \\[4pt]
+&= -m^2 J(\psi,\zeta+f) + \nu m^2\nabla^2\zeta - \alpha(\zeta-\zeta_0), \\
 \zeta &= m^2\nabla^2\psi .
 \end{aligned}
 $$

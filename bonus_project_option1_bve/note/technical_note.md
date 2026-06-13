@@ -2,6 +2,11 @@
 
 **Bonus Project Option 1 — Numerical Weather Prediction Course**
 
+**Yutian Qi (231170026) · Yuncan Xiao (231170016)**
+
+Code and documentation are available at:
+[https://github.com/Drink8Water/NWP-Bonus](https://github.com/Drink8Water/NWP-Bonus)
+
 ---
 
 ## 1. Case and Data
@@ -286,15 +291,14 @@ forecasts without explicit numerical damping.
 
 ## Individual Contributions
 
-This project was completed by a two-person group. Yutian Qi (231170026) was
-mainly responsible for the Lambert finite-area BVE model implementation,
-including the model formulation, Arakawa Jacobian, RK4 integration,
-DST-based Poisson inversion, boundary-condition treatment, and numerical
-diagnostics, and contributed to the experimental design and interpretation
-of dynamical results. Yuncan Xiao (231170016) was mainly responsible for
-ERA5 preprocessing, Lambert-grid construction, regridding, forecast
-verification, figure generation, score organization, and documentation
-preparation, and contributed to the selection of the East Asian winter case.
+This project was completed by a two-person group. The work was divided by
+major technical components while both members participated in the overall
+design, interpretation, and final revision.
+
+| Member | Main Contributions |
+| --- | --- |
+| Yutian Qi (231170026) | Took primary responsibility for the Lambert finite-area BVE model implementation, including the model formulation, Arakawa Jacobian, RK4 integration, DST-based Poisson inversion, boundary-condition treatment, and numerical diagnostics, and contributed to the experimental design and interpretation of dynamical results. |
+| Yuncan Xiao (231170016) | Took primary responsibility for ERA5 preprocessing, Lambert-grid construction, regridding, forecast verification, figure generation, score organization, and documentation preparation, and contributed to the selection of the East Asian winter case. |
 
 Both members contributed to debugging, result analysis, discussion of model
 limitations, comparison with the persistence baseline, and final revision of
